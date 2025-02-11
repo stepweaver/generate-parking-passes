@@ -92,13 +92,13 @@ def generate_email(to_email, subject, body, pdf_path=None):
             print(f"Warning: PDF file not found at {pdf_path}")
 
     try:
-        # Convert the message to base64 encoded string
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
         raw_message = {'raw': raw}
         service.users().messages().send(userId='me', body=raw_message).execute()
-        print(f"Email sent successfully to {to_email}")
+        return True
     except Exception as e:
         print(f"Error sending email: {e}")
+        return False
 
 
 def generate_diamond_pass_pdf(data, output_path="diamondPass.pdf"):
@@ -109,12 +109,6 @@ def generate_diamond_pass_pdf(data, output_path="diamondPass.pdf"):
     template_path = os.path.join(script_dir, "templates", "diamondPass.html")
     nd_logo_path = os.path.join(script_dir, "assets", "NotreDameFightingIrish.png")
     footer_logo_path = os.path.join(script_dir, "assets", "A91waj2z0_18kacb_mug.png")
-    
-    # Print paths for debugging
-    print(f"\nLooking for files at:")
-    print(f"Template: {template_path}")
-    print(f"ND Logo: {nd_logo_path}")
-    print(f"Footer Logo: {footer_logo_path}")
     
     try:
         with open(template_path, "r") as f:
@@ -188,12 +182,7 @@ def generate_diamond_pass_pdf(data, output_path="diamondPass.pdf"):
             options=options
         )
         
-        if os.path.exists(output_path):
-            print(f"PDF generated successfully at {output_path}")
-            return output_path
-        else:
-            print("Error: PDF file was not created")
-            return None
+        return output_path if os.path.exists(output_path) else None
             
     except Exception as e:
         print(f"Error generating PDF: {e}")
@@ -399,152 +388,141 @@ def parse_js_date(date_str):
 def main():
     directory_path = r"G:\Shared drives\Card Office\Department Guest Parking Passes"
     csv_path = os.path.join(directory_path, "master_file.csv")
-    try:
-        # First attempt: try reading with error_bad_lines=False to skip problematic rows
-        df = pd.read_csv(csv_path, on_bad_lines='skip')
-        print(f"Successfully loaded {len(df)} rows from CSV")
-        
-        # Convert VEHICLE_COUNT to numeric, replacing any non-numeric values with 0
-        df['VEHICLE_COUNT'] = pd.to_numeric(df['VEHICLE_COUNT'], errors='coerce').fillna(0).astype(int)
-        
-    except Exception as e:
-        print(f"Error reading CSV with skip option: {e}")
-        try:
-            # Second attempt: try reading with a specific separator and quoting
-            df = pd.read_csv(csv_path, sep=',', quoting=csv.QUOTE_ALL)
-            print(f"Successfully loaded {len(df)} rows from CSV with quote handling")
-            df['VEHICLE_COUNT'] = pd.to_numeric(df['VEHICLE_COUNT'], errors='coerce').fillna(0).astype(int)
-        except Exception as e:
-            print(f"Error reading CSV with quote handling: {e}")
-            # Third attempt: try reading with more lenient options
-            df = pd.read_csv(csv_path, sep=',', quoting=csv.QUOTE_MINIMAL, 
-                            on_bad_lines='skip', encoding='utf-8-sig')
-            print(f"Successfully loaded {len(df)} rows from CSV with minimal quoting")
-            df['VEHICLE_COUNT'] = pd.to_numeric(df['VEHICLE_COUNT'], errors='coerce').fillna(0).astype(int)
     
-    # Get current academic year
-    current_year = datetime.now().year
+    try:
+        df = pd.read_csv(csv_path, on_bad_lines='skip')
+        df['VEHICLE_COUNT'] = pd.to_numeric(df['VEHICLE_COUNT'], errors='coerce').fillna(0).astype(int)
+    except Exception as e:
+        print(f"Failed to read CSV: {e}")
+        return
+
+    diamond_passes = 0
+    emails_sent = 0
+    errors = []  # Changed to list to store error messages
     
     for index, row in df.iterrows():
         if not row['GENERATE']:
             continue
             
-        # Parse dates using the new function
-        start_date = parse_js_date(row['START'])
-        end_date = parse_js_date(row['END'])
-        
-        if start_date is None or end_date is None:
-            print(f"Skipping row {index} due to invalid dates")
-            continue
+        try:
+            start_date = parse_js_date(row['START'])
+            end_date = parse_js_date(row['END'])
             
-        data = {
-            'ACADEMIC_YEAR_START': str(current_year),
-            'ACADEMIC_YEAR_END': str(current_year + 1),
-            'PASS_TYPE': 'UNIVERSITY OF NOTRE DAME',
-            'PARKING_TYPE': 'GUEST PARKING PASS',
-            'VALID_UNTIL': format_date_range(row['START'], row['END']),
-            'LOT': 'C LOT',
-            'ADD LOT': f"OR {row['ADD LOT']}" if pd.notna(row.get('ADD LOT', '')) else '',
-            'PASS_NUMBER': str(row['PASS #'])
-        }
-        
-        print(f"Pass number from CSV: {row['PASS #']}")
-        print(f"Data dictionary pass number: {data['PASS_NUMBER']}")
+            if start_date is None or end_date is None:
+                errors.append(f"Pass {row['PASS #']}: Invalid dates - START: {row['START']}, END: {row['END']}")
+                continue
 
-        if row['VEHICLE_COUNT'] <= 10:
-            filename = f"diamondPass_{row['DEPARTMENT']}_{format_filename_date(row['START'])}.pdf"
-            filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-', '.'))
-            print(f"Creating PDF: {filename}")
-            
-            pdf_path = generate_diamond_pass_pdf(data, os.path.join(directory_path, filename))
-            if pdf_path:
-                email_body = f"""<html>
-                <head>
-                    <style>
-                        body {{
-                            font-family: Arial, sans-serif;
-                            line-height: 1.6;
-                            color: #333;
-                            max-width: 800px;
-                            margin: 0 auto;
-                            padding: 20px;
-                        }}
-                        .date-box {{
-                            margin: 20px 0;
-                            padding: 20px;
-                            background-color: #f8f9fa;
-                            border-radius: 8px;
-                            box-shadow: 0 2px 4px rgba(12, 35, 64, 0.1);
-                        }}
-                        .important-notice {{
-                            margin: 20px 0;
-                            padding: 15px;
-                            background-color: #0c2340;
-                            color: white;
-                            border-radius: 8px;
-                        }}
-                        .contact-info {{
-                            margin: 20px 0;
-                            padding: 15px;
-                            background-color: #e9ecef;
-                            border-radius: 8px;
-                        }}
-                        .signature {{
-                            margin-top: 30px;
-                            padding-top: 20px;
-                            border-top: 1px solid #dee2e6;
-                            color: #666;
-                        }}
-                        a {{
-                            color: #0c2340;
-                            text-decoration: none;
-                            font-weight: bold;
-                        }}
-                        a:hover {{
-                            text-decoration: underline;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <p>Dear {row['FIRST_NAME']},</p>
+            data = {
+                'ACADEMIC_YEAR_START': str(datetime.now().year),
+                'ACADEMIC_YEAR_END': str(datetime.now().year + 1),
+                'PASS_TYPE': 'UNIVERSITY OF NOTRE DAME',
+                'PARKING_TYPE': 'GUEST PARKING PASS',
+                'VALID_UNTIL': format_date_range(row['START'], row['END']),
+                'LOT': 'C LOT',
+                'ADD LOT': f"OR {row['ADD LOT']}" if pd.notna(row.get('ADD LOT', '')) else '',
+                'PASS_NUMBER': str(row['PASS #'])
+            }
 
-                    <div class="date-box">
-                        A Guest Parking Pass .pdf has been attached for use by your guest(s) on:<br>
-                        <span style="font-size: 1.4em; color: #0c2340; font-weight: bold; display: block; margin: 10px 0;">
-                            {start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}
-                        </span>
-                    </div>
+            if row['VEHICLE_COUNT'] <= 10:
+                filename = f"diamondPass_{row['DEPARTMENT']}_{format_filename_date(row['START'])}.pdf"
+                filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-', '.'))
+                
+                pdf_path = generate_diamond_pass_pdf(data, os.path.join(directory_path, filename))
+                if pdf_path:
+                    email_body = f"""<html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: Arial, sans-serif;
+                                line-height: 1.6;
+                                color: #333;
+                                max-width: 800px;
+                                margin: 0 auto;
+                                padding: 20px;
+                            }}
+                            .date-box {{
+                                margin: 20px 0;
+                                padding: 20px;
+                                background-color: #f8f9fa;
+                                border-radius: 8px;
+                                box-shadow: 0 2px 4px rgba(12, 35, 64, 0.1);
+                            }}
+                            .important-notice {{
+                                margin: 20px 0;
+                                padding: 15px;
+                                background-color: #0c2340;
+                                color: white;
+                                border-radius: 8px;
+                            }}
+                            .contact-info {{
+                                margin: 20px 0;
+                                padding: 15px;
+                                background-color: #e9ecef;
+                                border-radius: 8px;
+                            }}
+                            .signature {{
+                                margin-top: 30px;
+                                padding-top: 20px;
+                                border-top: 1px solid #dee2e6;
+                                color: #666;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <p>Dear {row['FIRST_NAME']},</p>
 
-                    <p>This PDF version of the Guest Parking Pass can be emailed to your guest(s) in advance of their visit, 
-                    and should be printed and placed on their vehicle's dash while parked on campus. It is valid only for the 
-                    date(s) indicated on the pass.</p>
+                        <div class="date-box">
+                            A Guest Parking Pass .pdf has been attached for use by your guest(s) on:<br>
+                            <span style="font-size: 1.4em; color: #0c2340; font-weight: bold; display: block; margin: 10px 0;">
+                                {start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}
+                            </span>
+                        </div>
 
-                    <div class="important-notice">
-                        <p style="margin: 0;"><strong>Important:</strong> The FOAPAL number provided will be charged for 
-                        the number of guest passes requested after the usage date.</p>
-                    </div>
+                        <p>This PDF version of the Guest Parking Pass can be emailed to your guest(s) in advance of their visit, 
+                        and should be printed and placed on their vehicle's dash while parked on campus. It is valid only for the 
+                        date(s) indicated on the pass.</p>
 
-                    <div class="contact-info">
-                        <p>If you have any questions, please contact our office at:<br>
-                        📞 <a href="tel:574-631-5053">574-631-5053</a><br>
-                        ✉️ <a href="mailto:parking@nd.edu">parking@nd.edu</a></p>
-                    </div>
+                        <div class="important-notice">
+                            <p style="margin: 0;"><strong>Important:</strong> The FOAPAL number provided will be charged for 
+                            the number of guest passes requested after the usage date.</p>
+                        </div>
 
-                    <div class="signature">
-                        <p>Thank you,<br>
-                        <em>NDPD Parking Services Office</em></p>
-                        <p style="color: #666; font-size: 0.9em;">Pass Number: {row['PASS #']}</p>
-                    </div>
-                </body>
-                </html>"""
-                generate_email(row['EMAIL'], "Diamond Parking Pass", email_body, pdf_path)
+                        <div class="contact-info">
+                            <p>If you have any questions, please contact our office at:<br>
+                            📞 <a href="tel:574-631-5053">574-631-5053</a><br>
+                            ✉️ <a href="mailto:parking@nd.edu">parking@nd.edu</a></p>
+                        </div>
+
+                        <div class="signature">
+                            <p>Thank you,<br>
+                            <em>NDPD Parking Services Office</em></p>
+                            <p style="color: #666; font-size: 0.9em;">Pass Number: {row['PASS #']}</p>
+                        </div>
+                    </body>
+                    </html>"""
+                    if generate_email(row['EMAIL'], "Diamond Parking Pass", email_body, pdf_path):
+                        diamond_passes += 1
+                        emails_sent += 1
+                    else:
+                        errors.append(f"Pass {row['PASS #']}: Failed to send Diamond Pass email to {row['EMAIL']}")
+                else:
+                    errors.append(f"Pass {row['PASS #']}: Failed to generate PDF")
             else:
-                print(f"Failed to generate PDF for row {index}")
-        else:
-            # Sends ParkMobile email for large vehicle counts
-            email_body = generate_parkmobile_email_body(row, start_date, end_date)
-            generate_email(row['EMAIL'], "ParkMobile Access Code for Single or Multiple Day Event [P]", email_body)
-
+                email_body = generate_parkmobile_email_body(row, start_date, end_date)
+                if generate_email(row['EMAIL'], "ParkMobile Access Code", email_body):
+                    emails_sent += 1
+                else:
+                    errors.append(f"Pass {row['PASS #']}: Failed to send ParkMobile email to {row['EMAIL']}")
+                
+        except Exception as e:
+            errors.append(f"Pass {row['PASS #']}: Unexpected error - {str(e)}")
+            
+    print(f"Diamond Passes generated: {diamond_passes}")
+    print(f"Total emails sent: {emails_sent}")
+    if errors:
+        print("\nErrors encountered:")
+        for error in errors:
+            print(f"- {error}")
 
 if __name__ == "__main__":
     main()
