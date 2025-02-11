@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parking Pass</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .pass-container {
+        width: 8.5in; /* Letter width */
+        height: 11in; /* Letter height */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+      }
+      .pass-content {
+        width: 90%;
+        max-width: 7.5in;
+        border: 2px dashed #000;
+        padding: 20px;
+        text-align: center;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      /* Common text styles */
+      .year,
+      .details,
+      .valid-until,
+      .parking-location {
+        color: #0c2340;
+        font-weight: 900;
+      }
+
+      /* Common container styles */
+      .details,
+      .parking-location {
+        border: 2px dashed;
+        line-height: 1.4;
+        margin: 0.4in auto;
+        padding: 15px;
+      }
+
+      .year {
+        position: relative;
+        font-size: 6em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 0.7in;
+      }
+
+      .year-logo {
+        height: 140px;
+        width: auto;
+        margin: 0;
+        align-self: center;
+        filter: drop-shadow(0 0 1px #ae9142) drop-shadow(0 0 2px #ae9142)
+          drop-shadow(0 0 3px #ae9142) drop-shadow(0 0 4px #ae9142)
+          drop-shadow(0 0 4px #ae9142);
+      }
+
+      .details {
+        border-color: #ccc;
+        background-color: white;
+      }
+
+      .details span {
+        font-size: 2.2em;
+        white-space: nowrap;
+        display: block;
+      }
+
+      .valid-until {
+        font-size: 2.5em;
+        white-space: nowrap;
+      }
+
+      .valid-until-date {
+        color: red;
+        white-space: nowrap;
+        display: inline-block;
+      }
+
+      .parking-location {
+        border-color: #0c2340;
+        font-size: 2.2em;
+        width: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .lot-name {
+        font-size: 1em;
+        margin-top: 5px;
+      }
+
+      .instructions {
+        font-size: 0.95em;
+        text-align: left;
+        padding-left: 40px;
+        line-height: 1.3;
+        margin-bottom: 0.4in;
+      }
+      .safety {
+        margin-top: auto;
+        margin-bottom: 0.3in;
+        font-size: 0.9em;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .pass-number {
+        position: absolute;
+        bottom: 10px;
+        right: 20px;
+        font-size: 0.8em;
+        color: #666;
+        text-align: right;
+      }
+      .emergency-number {
+        color: red;
+      }
+      .footer-logo {
+        height: 70px;
+        width: auto;
+        margin-left: 10px;
+        margin-top: 5px;
+      }
+      @page {
+        size: letter;
+        margin: 0;
+      }
+      @media print {
+        body {
+          min-height: 11in;
+          width: 8.5in;
+          margin: 0;
+          padding: 0;
+        }
+        .pass-container {
+          margin: auto;
+          page-break-inside: avoid;
+        }
+        .instructions {
+          font-size: 14pt;
+        }
+        .safety {
+          font-size: 12pt;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pass-container">
+      <div class="pass-content">
+        <div class="year">
+          {{academic_year_start}}
+          <img
+            src="NotreDameFightingIrish.png"
+            alt="ND Logo"
+            class="year-logo"
+          />
+          {{academic_year_end}}
+        </div>
+        <div class="details">
+          <span class="pass-type">UNIVERSITY OF NOTRE DAME</span>
+          <span class="parking-type">GUEST PARKING PASS</span>
+        </div>
+        <div class="valid-until">
+          VALID:
+          <span class="valid-until-date">{{valid_until}}</span>
+        </div>
+        <div class="parking-location">
+          <div>AUTHORIZED FOR PARKING IN ANY</div>
+          <div class="lot-name">{{lot_name}}</div>
+          <div class="lot-name" style="margin-top: 5px">{{add_lot}}</div>
+        </div>
+        <div class="instructions">
+          <ul>
+            <li>
+              Place this pass face-up on your vehicle's dashboard while parked.
+            </li>
+            <li>
+              Do not park in Reserved Spaces or ADA Spaces (without hangtag.)
+            </li>
+            <li>Do not block driveways or dumpsters.</li>
+            <li>Do not park in gated lots.</li>
+          </ul>
+        </div>
+        <div class="safety">
+          <div class="safety-text">
+            Be Safe! Lock your vehicle.<br />
+            <span class="emergency-number"
+              >Call 574-631-5555 for any emergency.</span
+            >
+          </div>
+          <img
+            src="A91waj2z0_18kacb_mug.png"
+            alt="ND Logo"
+            class="footer-logo"
+          />
+        </div>
+        <div class="pass-number">Pass number: {{pass_number}}</div>
+      </div>
+    </div>
+  </body>
+</html>
