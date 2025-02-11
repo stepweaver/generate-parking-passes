@@ -14,4 +14,7 @@ temp_credentials.json
 
 # Virtual environment
 venv/
-env/ 
+env/
+
+# Credentials directory
+credentials/ 

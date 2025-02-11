@@ -18,7 +18,14 @@ load_dotenv()  # Load environment variables from .env file
 
 # --- OAuth 2.0 Configuration ---
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']  # Gmail send scope
-TOKEN_FILE = 'token.pickle'  # Path to the token pickle file
+
+# Get the project root directory (one level up from src)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Create a credentials directory if it doesn't exist
+CREDENTIALS_DIR = os.path.join(PROJECT_ROOT, 'credentials')
+os.makedirs(CREDENTIALS_DIR, exist_ok=True)
+# Store token.pickle in the credentials directory
+TOKEN_FILE = os.path.join(CREDENTIALS_DIR, 'token.pickle')
 
 def get_credentials_dict():
     return {
@@ -502,7 +509,7 @@ def main():
                     <p>Dear {row['FIRST_NAME']},</p>
 
                     <div class="date-box">
-                        A Guest Parking Pass .pdf has been attached for use by your guest(s) on<br>
+                        A Guest Parking Pass .pdf has been attached for use by your guest(s) on:<br>
                         <span style="font-size: 1.4em; color: #0c2340; font-weight: bold; display: block; margin: 10px 0;">
                             {start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}
                         </span>
