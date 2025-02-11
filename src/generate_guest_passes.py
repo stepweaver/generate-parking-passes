@@ -243,6 +243,16 @@ def format_filename_date(date_str):
     
     return date.strftime('%Y%m%d')  # Format as YYYYMMDD
 
+def format_email_date(date):
+    """Format date in long form for emails"""
+    return date.strftime('%B %d, %Y')  # e.g. "February 11, 2025"
+
+def format_email_date_range(start_date, end_date):
+    """Format date range for emails"""
+    if start_date.date() == end_date.date():
+        return format_email_date(start_date)
+    return f"{format_email_date(start_date)} - {format_email_date(end_date)}"
+
 def generate_parkmobile_email_body(row, start_date, end_date):
     """Generate email body for ParkMobile access code"""
     
@@ -318,7 +328,7 @@ def generate_parkmobile_email_body(row, start_date, end_date):
 
         <div class="info-box">
             <strong>Event:</strong> {row.get('EVENT', 'Event Name Not Provided')}<br>
-            <strong>Event Date:</strong> {start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}<br>
+            <strong>Event Date:</strong> {format_email_date_range(start_date, end_date)}<br>
             <strong>ParkMobile Access Code:</strong><br>
             <div class="access-code">{row['PARKMOBILE']}</div>
         </div>
@@ -386,9 +396,14 @@ def parse_js_date(date_str):
         return None
 
 def main():
+    # Base directory for the master file
     directory_path = r"G:\Shared drives\Card Office\Department Guest Parking Passes"
     csv_path = os.path.join(directory_path, "master_file.csv")
     
+    # Define the output directory for Diamond Pass PDFs
+    diamond_pass_pdf_dir = os.path.join(directory_path, "Diamond Passes")
+    os.makedirs(diamond_pass_pdf_dir, exist_ok=True)  # Create directory if it doesn't exist
+
     try:
         df = pd.read_csv(csv_path, on_bad_lines='skip')
         df['VEHICLE_COUNT'] = pd.to_numeric(df['VEHICLE_COUNT'], errors='coerce').fillna(0).astype(int)
@@ -424,10 +439,11 @@ def main():
             }
 
             if row['VEHICLE_COUNT'] <= 10:
-                filename = f"diamondPass_{row['DEPARTMENT']}_{format_filename_date(row['START'])}.pdf"
+                filename = f"diamondPass_{row['DEPARTMENT']}_{row['PASS #']}.pdf"
                 filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-', '.'))
                 
-                pdf_path = generate_diamond_pass_pdf(data, os.path.join(directory_path, filename))
+                # Use the Diamond Passes subdirectory for outputting PDFs
+                pdf_path = generate_diamond_pass_pdf(data, os.path.join(diamond_pass_pdf_dir, filename))
                 if pdf_path:
                     email_body = f"""<html>
                     <head>
@@ -474,7 +490,7 @@ def main():
                         <div class="date-box">
                             A Guest Parking Pass .pdf has been attached for use by your guest(s) on:<br>
                             <span style="font-size: 1.4em; color: #0c2340; font-weight: bold; display: block; margin: 10px 0;">
-                                {start_date.strftime('%m/%d/%Y')} - {end_date.strftime('%m/%d/%Y')}
+                                {format_email_date_range(start_date, end_date)}
                             </span>
                         </div>
 
