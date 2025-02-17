@@ -12,6 +12,7 @@ import pickle
 import base64
 import json
 from dotenv import load_dotenv
+from tqdm import tqdm  # Add this import at the top with other imports
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -414,7 +415,8 @@ def main():
     emails_sent = 0
     errors = []  # Changed to list to store error messages
     
-    for index, row in df.iterrows():
+    # Wrap the DataFrame iteration with tqdm for a progress bar
+    for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing rows"):
         if not row['GENERATE']:
             continue
             
