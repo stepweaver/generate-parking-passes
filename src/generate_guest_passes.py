@@ -266,6 +266,9 @@ def generate_parkmobile_email_body(row, start_date, end_date):
         print(f"Warning: Could not load ParkMobile image: {e}")
         image_base64 = None
 
+    # Get the current date
+    email_generated_date = datetime.now().strftime('%B %d, %Y')
+
     return f"""<html>
     <head>
         <style>
@@ -333,9 +336,12 @@ def generate_parkmobile_email_body(row, start_date, end_date):
             <div class="access-code">{row['PARKMOBILE']}</div>
         </div>
 
-    <p>Your ParkMobile Access Code has been assigned! Please share this information with your guests. The Access Code is now LIVE and may be used to reserve parking for the event date. This can be done prior to arriving at Notre Dame.</p>
-        {f'<img src="data:image/png;base64,{image_base64}" alt="ParkMobile Interface">' if image_base64 else ''}
+        <p>Your ParkMobile Access Code has been assigned! Please share this information with your guests. The Access Code may be used to reserve parking for the event date. This can be done prior to arriving at Notre Dame.</p>
 
+        <div class="warning-box">
+            <strong>Note:</strong> Please allow 1-2 business days from {email_generated_date} for the access code to become active in the ParkMobile app.
+        </div>
+        {f'<img src="data:image/png;base64,{image_base64}" alt="ParkMobile Interface">' if image_base64 else ''}
         <div class="info-box">
             <h3 style="color: #0c2340; margin-top: 0;">How to Use ParkMobile:</h3>
             <ol style="padding-left: 20px;">
