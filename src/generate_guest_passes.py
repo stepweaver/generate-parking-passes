@@ -20,7 +20,8 @@ load_dotenv()  # Load environment variables from .env file
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/gmail.modify',
-    'https://www.googleapis.com/auth/gmail.settings.basic'
+    'https://www.googleapis.com/auth/gmail.settings.basic',
+    'https://www.googleapis.com/auth/gmail.settings.sharing'  # Required for delegation
 ]  # Gmail scopes for sending and managing settings
 
 # Get the project root directory (one level up from src)
@@ -80,7 +81,8 @@ def generate_email(to_email, subject, body, pdf_path=None):
     service = build('gmail', 'v1', credentials=creds)
 
     msg = MIMEMultipart()
-    msg['From'] = 'idcard@nd.edu'  # Use idcard@nd.edu as the sender
+    delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'parking@nd.edu')
+    msg['From'] = delegate_email  # Use delegate email as the sender
     msg['To'] = to_email
     msg['Subject'] = subject
 
@@ -96,10 +98,26 @@ def generate_email(to_email, subject, body, pdf_path=None):
             print(f"Warning: PDF file not found at {pdf_path}")
 
     try:
+        # If using delegation, set the 'me' value to the delegate's email
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
         raw_message = {'raw': raw}
-        service.users().messages().send(userId='me', body=raw_message).execute()  # Use 'me' to send as authenticated user
-        return True
+        
+        # Use delegation if configured
+        if delegate_email and delegate_email != 'parking@nd.edu':
+            message = service.users().messages().send(
+                userId='me', 
+                body=raw_message,
+                # Add delegation header
+                fields='',
+                headers={'X-Goog-User-Delegation': delegate_email}
+            ).execute()
+        else:
+            message = service.users().messages().send(
+                userId='me', 
+                body=raw_message
+            ).execute()
+            
+        return message
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
