@@ -17,7 +17,11 @@ from tqdm import tqdm  # Add this import at the top with other imports
 load_dotenv()  # Load environment variables from .env file
 
 # --- OAuth 2.0 Configuration ---
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']  # Gmail send scope
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.settings.basic'
+]  # Gmail scopes for sending and managing settings
 
 # Get the project root directory (one level up from src)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,7 +80,7 @@ def generate_email(to_email, subject, body, pdf_path=None):
     service = build('gmail', 'v1', credentials=creds)
 
     msg = MIMEMultipart()
-    msg['From'] = 'me'  # 'me' uses the authenticated user's email
+    msg['From'] = 'idcard@nd.edu'  # Use idcard@nd.edu as the sender
     msg['To'] = to_email
     msg['Subject'] = subject
 
@@ -94,7 +98,7 @@ def generate_email(to_email, subject, body, pdf_path=None):
     try:
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
         raw_message = {'raw': raw}
-        service.users().messages().send(userId='me', body=raw_message).execute()
+        service.users().messages().send(userId='me', body=raw_message).execute()  # Use 'me' to send as authenticated user
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
