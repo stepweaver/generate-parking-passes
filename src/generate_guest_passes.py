@@ -48,13 +48,23 @@ def get_credentials_dict():
 def authenticate_gmail():
     creds = None
     if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, 'rb') as token:
-            creds = pickle.load(token)
+        try:
+            with open(TOKEN_FILE, 'rb') as token:
+                creds = pickle.load(token)
+        except Exception as e:
+            print(f"Error loading token file: {e}")
+            creds = None
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                print(f"Error refreshing token: {e}")
+                print("Will attempt to get new credentials through authorization flow")
+                creds = None
+        
+        if not creds:
             # Create a temporary credentials file
             credentials_dict = get_credentials_dict()
             temp_creds_file = "temp_credentials.json"
@@ -62,23 +72,37 @@ def authenticate_gmail():
             with open(temp_creds_file, 'w') as f:
                 json.dump(credentials_dict, f)
             
-            flow = InstalledAppFlow.from_client_secrets_file(
-                temp_creds_file, SCOPES)
-            creds = flow.run_local_server(port=0)
-            
-            # Clean up temporary file
-            os.remove(temp_creds_file)
-
-        # Save the credentials for the next run
-        with open(TOKEN_FILE, 'wb') as token:
-            pickle.dump(creds, token)
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    temp_creds_file, SCOPES)
+                creds = flow.run_local_server(port=0)
+                
+                # Save the credentials for the next run
+                with open(TOKEN_FILE, 'wb') as token:
+                    pickle.dump(creds, token)
+            except Exception as e:
+                print(f"Error in authorization flow: {e}")
+                print("Please check your OAuth client credentials in the .env file")
+                return None
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_creds_file):
+                    os.remove(temp_creds_file)
 
     return creds
 
 
 def generate_email(to_email, subject, body, pdf_path=None):
     creds = authenticate_gmail()
-    service = build('gmail', 'v1', credentials=creds)
+    if not creds:
+        print("Failed to authenticate with Gmail")
+        return False
+        
+    try:
+        service = build('gmail', 'v1', credentials=creds)
+    except Exception as e:
+        print(f"Error building Gmail service: {e}")
+        return False
 
     msg = MIMEMultipart()
     delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'parking@nd.edu')
@@ -119,7 +143,16 @@ def generate_email(to_email, subject, body, pdf_path=None):
             
         return message
     except Exception as e:
+        error_details = getattr(e, 'details', str(e))
         print(f"Error sending email: {e}")
+        print(f"Error details: {error_details}")
+        
+        # Check if it's an OAuth error and delete the token file to force reauthentication
+        if "OAuth" in str(e) or "client" in str(e) or "credential" in str(e):
+            if os.path.exists(TOKEN_FILE):
+                print("Deleting token file to force reauthentication")
+                os.remove(TOKEN_FILE)
+            print("Please update your OAuth credentials in the .env file and run the script again")
         return False
 
 
