@@ -416,7 +416,7 @@ def generate_parkmobile_email_body(row, start_date, end_date):
                 <li><span style="font-weight: bold;">FIRST:</span> Download the ParkMobile app on your phone* <strong>OR</strong> visit <a href="https://parkmobile.io" style="color: #0c2340; font-weight: bold; font-size: 1.1em;">ParkMobile.io</a></li>
                 <li><span style="font-weight: bold;">NEXT:</span> Your specific event will appear in a blue bar at the top of the screen</li>
                 <li><span style="font-weight: bold;">THEN:</span> Click "Filters & Access Codes" (located just below the blue bar)</li>
-                <li><span style="font-weight: bold;">ENTER THIS CODE:</span>
+                <li><span style="font-weight: bold;">ENTER THIS CODE:</span><br>
                     <div class="access-code">{row['PARKMOBILE']}</div>
                 </li>
                 <li><span style="font-weight: bold;">CLICK:</span> "Apply" to unlock complimentary parking in available lots</li>
@@ -430,19 +430,19 @@ def generate_parkmobile_email_body(row, start_date, end_date):
 
         <div class="warning-box" style="border: 3px solid #ffc107; text-align: center;">
             <h3 style="color: #856404; margin-top: 0; font-size: 1.3em;">⚠️ IMPORTANT FOR ANDROID USERS ⚠️</h3>
-            <ul style="margin: 10px 0 0 0; padding-left: 20px; text-align: left; list-style-type: none;">
-                <li style="margin-bottom: 10px;">📱 Android users MUST use the <a href="https://parkmobile.io" style="color: #856404; font-weight: bold; text-decoration: underline;">ParkMobile.io website</a> (not the app)</li>
-                <li style="margin-bottom: 10px;">❌ Access codes are NOT supported in the Android app</li>
-                <li style="margin-bottom: 10px;">✅ Once reserved, your parking will appear in your ParkMobile app account</li>
+            <ul style="padding-left: 20px; text-align: left; list-style-type: none;">
+                <li style="margin-bottom: 5px;">📱 Android users MUST use the <a href="https://parkmobile.io" style="color: #856404; font-weight: bold; text-decoration: underline;">ParkMobile.io website</a> (not the app)</li>
+                <li style="margin-bottom: 5px;">❌ Access codes are NOT supported in the Android app</li>
+                <li style="margin-bottom: 5px;">✅ Once reserved, your parking will appear in your ParkMobile app account</li>
             </ul>
         </div>
 
         <div class="info-box" style="border: 2px solid #0c2340;">
             <h3 style="color: #0c2340; margin-top: 0; text-align: center; font-size: 1.4em;">📅 On the Day of Parking:</h3>
             <ul style="padding-left: 20px;">
-                <li style="margin-bottom: 15px;">✅ <span style="font-weight: bold; font-size: 1.1em;">No physical parking pass needed</span></li>
-                <li style="margin-bottom: 15px;">✅ <span style="font-weight: bold; font-size: 1.1em;">NDPD Parking Enforcement will verify your parking using your license plate</span></li>
-                <li style="margin-bottom: 15px;">⚠️ <span style="font-weight: bold; font-size: 1.1em; color: #856404;">IMPORTANT: Make sure the license plate number is entered correctly</span></li>
+                <li style="margin-bottom: 5px;">✅ <span style="font-weight: bold; font-size: 1.1em;">No physical parking pass needed</span></li>
+                <li style="margin-bottom: 5px;">✅ <span style="font-weight: bold; font-size: 1.1em;">NDPD Parking Enforcement will verify your parking using your license plate</span></li>
+                <li style="margin-bottom: 5px;">⚠️ <span style="font-weight: bold; font-size: 1.1em; color: #856404;">IMPORTANT: Make sure the license plate number is entered correctly</span></li>
             </ul>
         </div>
 
