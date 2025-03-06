@@ -105,7 +105,7 @@ def generate_email(to_email, subject, body, pdf_path=None):
         return False
 
     msg = MIMEMultipart()
-    delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'parking@nd.edu')
+    delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'idcard@nd.edu')
     msg['From'] = delegate_email  # Use delegate email as the sender
     msg['To'] = to_email
     msg['Subject'] = subject
@@ -127,7 +127,7 @@ def generate_email(to_email, subject, body, pdf_path=None):
         raw_message = {'raw': raw}
         
         # Use delegation if configured
-        if delegate_email and delegate_email != 'parking@nd.edu':
+        if delegate_email and delegate_email != 'idcard@nd.edu':
             message = service.users().messages().send(
                 userId='me', 
                 body=raw_message,
@@ -329,11 +329,18 @@ def generate_parkmobile_email_body(row, start_date, end_date):
         <style>
             body {{
                 font-family: Arial, sans-serif;
-                line-height: 1.6;
+                line-height: 1.8;
                 color: #333;
-                max-width: 800px;
+                max-width: 600px;
                 margin: 0 auto;
                 padding: 20px;
+                font-size: 16px;
+                background-color: #ffffff;
+            }}
+            .email-container {{
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
             }}
             .info-box {{
                 margin: 20px 0;
@@ -343,21 +350,29 @@ def generate_parkmobile_email_body(row, start_date, end_date):
                 box-shadow: 0 2px 4px rgba(12, 35, 64, 0.1);
             }}
             .access-code {{
-                font-size: 1.4em;
+                font-size: 1.6em;
                 color: #0c2340;
                 font-weight: bold;
                 background-color: #e9ecef;
-                padding: 10px;
-                border-radius: 4px;
-                display: inline-block;
-                margin: 10px 0;
+                padding: 15px;
+                border-radius: 8px;
+                display: block;
+                width: auto;
+                min-width: 100px;
+                max-width: 100%;
+                margin: 15px 0;
+                text-align: left;
+                border: 2px dashed #0c2340;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }}
             .warning-box {{
                 margin: 20px 0;
-                padding: 15px;
+                padding: 20px;
                 background-color: #fff3cd;
-                border-left: 4px solid #ffc107;
+                border-left: 6px solid #ffc107;
                 color: #856404;
+                font-size: 1.1em;
+                border-radius: 8px;
             }}
             .charge-notice {{
                 margin: 20px 0;
@@ -379,10 +394,40 @@ def generate_parkmobile_email_body(row, start_date, end_date):
                 border-radius: 8px;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }}
+            ol li, ul li {{
+                margin-bottom: 12px;
+                padding-left: 5px;
+            }}
+            ol, ul {{
+                padding-left: 30px;
+            }}
+            h3 {{
+                color: #0c2340;
+                margin-top: 25px;
+                margin-bottom: 15px;
+                font-size: 1.3em;
+            }}
+            .button {{
+                display: inline-block;
+                background-color: #0c2340;
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                font-weight: bold;
+                border-radius: 8px;
+                margin: 20px 0;
+                font-size: 1.2em;
+                text-align: center;
+            }}
+            a {{
+                color: #0c2340;
+                text-decoration: underline;
+                font-weight: bold;
+            }}
         </style>
     </head>
     <body>
-        <p>Greetings {row['FIRST_NAME']},</p>
+        <p>Greetings <span style="font-weight: bold; font-size: 1.1em;">{row['FIRST_NAME']},</span></p>
 
         <div class="info-box">
             <strong>Event:</strong> {row.get('EVENT', 'Event Name Not Provided')}<br>
@@ -399,35 +444,38 @@ def generate_parkmobile_email_body(row, start_date, end_date):
         {f'<img src="data:image/png;base64,{image_base64}" alt="ParkMobile Interface">' if image_base64 else ''}
         <div class="info-box">
             <h3 style="color: #0c2340; margin-top: 0;">How to Use ParkMobile:</h3>
+            <p style="font-weight: bold; margin-bottom: 20px; font-size: 1.1em;">Follow these steps to reserve your parking spot:</p>
             <ol style="padding-left: 20px;">
-                <li>Download the ParkMobile app on your phone* <strong>OR</strong> visit <a href="https://parkmobile.io" style="color: #0c2340; font-weight: bold;">ParkMobile.io</a></li>
-                <li>Your specific event will appear in a blue bar at the top of the screen</li>
-                <li>Click "Filters & Access Codes" (located just below the blue bar)</li>
-                <li>Enter your access code: <div class="access-code">{row['PARKMOBILE']}</div></li>
-                <li>Click "Apply" to unlock complimentary parking in available lots</li>
-                <li>Select your preferred parking lot from the list on the left</li>
-                <li>Click the green "Reserve" button</li>
-                <li>Enter your email address and vehicle license plate number</li>
-                <li>Complete the reservation process following the prompts</li>
+                <li><span style="font-weight: bold;">FIRST:</span> Download the ParkMobile app on your phone* <strong>OR</strong> visit <a href="https://parkmobile.io" style="color: #0c2340; font-weight: bold; font-size: 1.1em;">ParkMobile.io</a></li>
+                <li><span style="font-weight: bold;">NEXT:</span> Your specific event will appear in a blue bar at the top of the screen</li>
+                <li><span style="font-weight: bold;">THEN:</span> Click "Filters & Access Codes" (located just below the blue bar)</li>
+                <li><span style="font-weight: bold;">ENTER THIS CODE:</span>
+                    <div class="access-code">{row['PARKMOBILE']}</div>
+                </li>
+                <li><span style="font-weight: bold;">CLICK:</span> "Apply" to unlock complimentary parking in available lots</li>
+                <li><span style="font-weight: bold;">SELECT:</span> Your preferred parking lot from the list</li>
+                <li><span style="font-weight: bold;">CLICK:</span> The green "Reserve" button</li>
+                <li><span style="font-weight: bold;">ENTER:</span> Your email address and vehicle license plate number</li>
+                <li><span style="font-weight: bold;">COMPLETE:</span> Follow the remaining prompts to finish your reservation</li>
             </ol>
-            <p><em>Note: You can either continue as a guest or create an account for future use.</em></p>
+            <p style="background-color: #e9ecef; padding: 10px; border-radius: 8px; margin-top: 20px;"><strong>Tip:</strong> <em>You can either continue as a guest or create an account for future use.</em></p>
         </div>
 
-        <div class="warning-box">
-            <strong>*IMPORTANT FOR ANDROID USERS:</strong>
-            <ul style="margin: 10px 0 0 0; padding-left: 20px;">
-                <li>Android users MUST use the ParkMobile.io website (not the app) to make reservations</li>
-                <li>Access codes are not supported in the Android version of the app</li>
-                <li>Once reserved, your parking will appear in your ParkMobile app account</li>
+        <div class="warning-box" style="border: 3px solid #ffc107; text-align: center;">
+            <h3 style="color: #856404; margin-top: 0; font-size: 1.3em;">⚠️ IMPORTANT FOR ANDROID USERS ⚠️</h3>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px; text-align: left; list-style-type: none;">
+                <li style="margin-bottom: 10px;">📱 Android users MUST use the <a href="https://parkmobile.io" style="color: #856404; font-weight: bold; text-decoration: underline;">ParkMobile.io website</a> (not the app)</li>
+                <li style="margin-bottom: 10px;">❌ Access codes are NOT supported in the Android app</li>
+                <li style="margin-bottom: 10px;">✅ Once reserved, your parking will appear in your ParkMobile app account</li>
             </ul>
         </div>
 
-        <div class="info-box">
-            <h3 style="color: #0c2340; margin-top: 0;">On the Day of Parking:</h3>
+        <div class="info-box" style="border: 2px solid #0c2340;">
+            <h3 style="color: #0c2340; margin-top: 0; text-align: center; font-size: 1.4em;">📅 On the Day of Parking:</h3>
             <ul style="padding-left: 20px;">
-                <li>No physical parking pass is needed</li>
-                <li>NDPD Parking Enforcement will verify your parking using your license plate</li>
-                <li><strong>Important:</strong> Make sure the license plate number is entered correctly</li>
+                <li style="margin-bottom: 15px;">✅ <span style="font-weight: bold; font-size: 1.1em;">No physical parking pass needed</span></li>
+                <li style="margin-bottom: 15px;">✅ <span style="font-weight: bold; font-size: 1.1em;">NDPD Parking Enforcement will verify your parking using your license plate</span></li>
+                <li style="margin-bottom: 15px;">⚠️ <span style="font-weight: bold; font-size: 1.1em; color: #856404;">IMPORTANT: Make sure the license plate number is entered correctly</span></li>
             </ul>
         </div>
 
@@ -438,8 +486,9 @@ def generate_parkmobile_email_body(row, start_date, end_date):
         <p>We recommend testing the link and code yourself before sharing with guests, so you can assist if they have questions.</p>
 
         <div class="signature">
-            <p>Thank you,<br>
-            <em>NDPD Parking Services Team</em></p>
+            <p style="font-size: 1.1em; margin-bottom: 5px;">Thank you,</p>
+            <p style="font-size: 1.2em; font-weight: bold; color: #0c2340; margin-top: 0;">NDPD Parking Services Team</p>
+            <hr style="border: 1px solid #dee2e6; margin: 15px 0;">
             <p style="color: #666; font-size: 0.9em;">Pass Number: {row['PASS #']}</p>
         </div>
     </body>
@@ -512,11 +561,18 @@ def main():
                         <style>
                             body {{
                                 font-family: Arial, sans-serif;
-                                line-height: 1.6;
+                                line-height: 1.8;
                                 color: #333;
-                                max-width: 800px;
+                                max-width: 600px;
                                 margin: 0 auto;
                                 padding: 20px;
+                                font-size: 16px;
+                                background-color: #ffffff;
+                            }}
+                            .email-container {{
+                                width: 100%;
+                                max-width: 600px;
+                                margin: 0 auto;
                             }}
                             .date-box {{
                                 margin: 20px 0;
@@ -524,6 +580,8 @@ def main():
                                 background-color: #f8f9fa;
                                 border-radius: 8px;
                                 box-shadow: 0 2px 4px rgba(12, 35, 64, 0.1);
+                                font-size: 1.1em;
+                                border: 1px solid #dee2e6;
                             }}
                             .important-notice {{
                                 margin: 20px 0;
@@ -544,36 +602,62 @@ def main():
                                 border-top: 1px solid #dee2e6;
                                 color: #666;
                             }}
+                            .button {{
+                                display: inline-block;
+                                background-color: #0c2340;
+                                color: white;
+                                padding: 15px 30px;
+                                text-decoration: none;
+                                font-weight: bold;
+                                border-radius: 8px;
+                                margin: 20px 0;
+                                font-size: 1.2em;
+                                text-align: center;
+                            }}
+                            a {{
+                                color: #0c2340;
+                                text-decoration: underline;
+                                font-weight: bold;
+                            }}
                         </style>
                     </head>
                     <body>
-                        <p>Dear {row['FIRST_NAME']},</p>
+                        <p>Greetings <span style="font-weight: bold; font-size: 1.1em;">{row['FIRST_NAME']},</span></p>
 
                         <div class="date-box">
-                            A Guest Parking Pass .pdf has been attached for use by your guest(s) on:<br>
-                            <span style="font-size: 1.4em; color: #0c2340; font-weight: bold; display: block; margin: 10px 0;">
+                            <h3 style="color: #0c2340; margin-top: 0; text-align: left;">📝 Guest Parking Pass Information</h3>
+                            <p style="font-size: 1.1em;">A Guest Parking Pass PDF has been <span style="font-weight: bold; text-decoration: underline;">attached to this email</span> for use by your guest(s) on:</p>
+                            <div style="font-size: 1.5em; color: #0c2340; font-weight: bold; background-color: #e9ecef; padding: 15px; border-radius: 8px; text-align: left; margin: 15px 0; border: 2px dashed #0c2340; display: inline-block; width: auto;">
                                 {format_email_date_range(start_date, end_date)}
-                            </span>
+                            </div>
                         </div>
 
-                        <p>This PDF version of the Guest Parking Pass can be emailed to your guest(s) in advance of their visit, 
-                        and should be printed and placed on their vehicle's dash while parked on campus. It is valid only for the 
-                        date(s) indicated on the pass.</p>
+                        <div style="font-size: 1.1em; line-height: 1.8; margin: 25px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                            <p>📄 This PDF version of the Guest Parking Pass:</p>
+                            <ul style="padding-left: 30px;">
+                                <li>Should be <span style="font-weight: bold;">emailed to your guest(s)</span> before their visit</li>
+                                <li>Must be <span style="font-weight: bold;">printed out</span> by your guest</li>
+                                <li>Needs to be <span style="font-weight: bold;">placed on their vehicle's dashboard</span> while parked</li>
+                                <li>Is <span style="font-weight: bold; color: #856404;">only valid for the date(s) shown on the pass</span></li>
+                            </ul>
+                        </div>
 
                         <div class="important-notice">
-                            <p style="margin: 0;"><strong>Important:</strong> The FOAPAL number provided will be charged for 
+                            <p style="margin: 0; font-size: 1.1em;"><strong>⚠️ Important:</strong> The FOAPAL number provided will be charged for 
                             the number of guest passes requested after the usage date.</p>
                         </div>
 
-                        <div class="contact-info">
-                            <p>If you have any questions, please contact our office at:<br>
-                            📞 <a href="tel:574-631-5053">574-631-5053</a><br>
-                            ✉️ <a href="mailto:parking@nd.edu">parking@nd.edu</a></p>
+                        <div class="contact-info" style="text-align: left;">
+                            <h3 style="color: #0c2340;">Need Help?</h3>
+                            <p style="font-size: 1.1em;">Contact our office at:</p>
+                            <a href="tel:574-631-5053" class="button">📞 Call: 574-631-5053</a><br>
+                            <a href="mailto:parking@nd.edu" class="button">✉️ Email: parking@nd.edu</a>
                         </div>
 
                         <div class="signature">
-                            <p>Thank you,<br>
-                            <em>NDPD Parking Services Office</em></p>
+                            <p style="font-size: 1.1em; margin-bottom: 5px;">Thank you,</p>
+                            <p style="font-size: 1.2em; font-weight: bold; color: #0c2340; margin-top: 0;">NDPD Parking Services Office</p>
+                            <hr style="border: 1px solid #dee2e6; margin: 15px 0;">
                             <p style="color: #666; font-size: 0.9em;">Pass Number: {row['PASS #']}</p>
                         </div>
                     </body>
