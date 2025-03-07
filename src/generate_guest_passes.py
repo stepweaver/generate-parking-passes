@@ -95,13 +95,22 @@ def generate_email(to_email, subject, body, pdf_path=None):
         return False
         
     try:
+        # Build the service with delegation
+        delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'parking@nd.edu')
         service = build('gmail', 'v1', credentials=creds)
+        
+        # Set up delegation
+        try:
+            service._http.credentials._delegate = delegate_email
+        except Exception as e:
+            print(f"Error setting up delegation: {e}")
+            return False
+
     except Exception as e:
         print(f"Error building Gmail service: {e}")
         return False
 
     msg = MIMEMultipart()
-    delegate_email = os.getenv('GMAIL_DELEGATE_EMAIL', 'idcard@nd.edu')
     msg['From'] = delegate_email
     msg['To'] = to_email
     msg['Subject'] = subject
@@ -121,19 +130,11 @@ def generate_email(to_email, subject, body, pdf_path=None):
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
         raw_message = {'raw': raw}
         
-        # Use delegation if configured
-        if delegate_email and delegate_email != 'idcard@nd.edu':
-            message = service.users().messages().send(
-                userId='me', 
-                body=raw_message,
-                fields='',
-                headers={'X-Goog-User-Delegation': delegate_email}
-            ).execute()
-        else:
-            message = service.users().messages().send(
-                userId='me', 
-                body=raw_message
-            ).execute()
+        # Send the message
+        message = service.users().messages().send(
+            userId='me',  # Use 'me' since we're already delegated
+            body=raw_message
+        ).execute()
             
         return message
     except Exception as e:
